@@ -18,14 +18,16 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("https://localhost:7013") // Local development URL
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 
     options.AddPolicy("AllowAzureStaticWebApp", policy =>
     {
         policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net") // Production URL
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -56,6 +58,7 @@ else if (app.Environment.IsProduction())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(); // Ensure UseCors is called before UseAuthentication and UseAuthorization
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
