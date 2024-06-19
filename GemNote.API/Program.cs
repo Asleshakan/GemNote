@@ -39,11 +39,11 @@ app.UseSwagger();
 if (app.Environment.IsDevelopment())
 {
 	app.UseSwaggerUI();
-	app.UseCors("AllowClientWebLocal");
+	app.UseCors("*");
 }
 else if (app.Environment.IsProduction())
 {
-	app.UseCors("AllowClientWeb");
+	app.UseCors("*");
 }
 
 app.UseHttpsRedirection();
