@@ -1,0 +1,116 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
+@using GemNote.Web.Services.Contracts
+@using GemNote.Web.States
+@using System.Net
+@using GemNote.Web.Components.ReiewComponents
+@using GemNote.Web.ViewModels.FlashcardViewModels
+@using Newtonsoft.Json
+
+@inject IToastService ToastService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject UserState UserState
+@inject IFlashcardService FlashcardService
+
+<PageTitle>Home</PageTitle>
+
+<FluentGrid AdaptiveRendering="true" Justify="JustifyContent.Center" Style="padding: 5px; " Class="grid-container">
+	<FluentGridItem xs="12" sm="8" Class="row-container">
+		<AuthorizeView>
+			<NotAuthorized>
+				<div class="page-title">
+					<FluentLabel Typo="Typography.PageTitle">Welcome to GemNote - Your great tool for creating and learning flashcards</FluentLabel>
+				</div>
+				<div class="image-container">
+					<img class="wall-image" src="images/wall-image2.webp" alt="wall image"/>
+				</div>
+				<div class="content">
+					<FluentLabel Typo="Typography.H4">
+						<FluentAnchor Href="login" Appearance="Appearance.Hypertext">Log in</FluentAnchor> or <FluentAnchor Href="register" Appearance="Appearance.Hypertext">sign up</FluentAnchor> to start creating your flashcards
+					</FluentLabel>
+				</div>
+			</NotAuthorized>
+
+			<Authorized>
+				<div class="page-title">
+					<FluentLabel Typo="Typography.PageTitle">Welcome back!</FluentLabel>
+				</div>
+				<div class="image-container">
+					<img class="wall-image" src="images/wall-image3.webp" alt="wall image"/>
+				</div>
+				<div class="content">
+					<FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+						<FluentLabel Typo="Typography.H4">
+							@(_message)
+						</FluentLabel>
+						@if (_hasDueFlashcard)
+						{
+							<ReviewButton ReviewFlashcards="@(_dueReviewFlashcards)"
+							              OnFinished="@OnFinishedReview"/>
+						}
+					</FluentStack>
+				</div>
+			</Authorized>
+		</AuthorizeView>
+	</FluentGridItem>
+</FluentGrid>
+
+@code {
+	private bool _hasDueFlashcard;
+	private IEnumerable<FlashcardVm>? _dueReviewFlashcards;
+	private string _message = "You have no flashcards to review today!";
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (UserState.IsAuthenticated)
+		{
+			var userId = UserState.UserId;
+
+			var (response, statusCode) = await FlashcardService.GetDueFlashcardsByUserIdAsync(userId!);
+
+			switch (statusCode)
+			{
+				case HttpStatusCode.Unauthorized:
+					var dialog401 = await DialogService.ShowErrorAsync("You are not authorized to access this page.");
+					await dialog401.Result;
+					NavigationManager.NavigateTo("/");
+					break;
+				case HttpStatusCode.Forbidden:
+					var dialog403 = await DialogService.ShowErrorAsync("You are not allowed to access this page.");
+					await dialog403.Result;
+					NavigationManager.NavigateTo("/");
+					break;
+				case HttpStatusCode.OK:
+					var jsonData = response.Data!.ToString();
+
+					if (!string.IsNullOrEmpty(jsonData))
+					{
+						try
+						{
+							_dueReviewFlashcards = JsonConvert.DeserializeObject<IEnumerable<FlashcardVm>>(jsonData) ?? new List<FlashcardVm>();
+						}
+						catch (JsonException ex)
+						{
+							_dueReviewFlashcards = new List<FlashcardVm>();
+						}
+
+						var dueReviewFlashcards = _dueReviewFlashcards.ToList();
+						_hasDueFlashcard = dueReviewFlashcards.Any();
+						_message = $"You have {dueReviewFlashcards.Count()} flashcards to review today!";
+					}
+
+					break;
+				case HttpStatusCode.NotFound:
+					_message = "You have no flashcards to review today!";
+					break;
+			}
+		}
+	}
+
+	private async Task OnFinishedReview()
+	{
+		await InvokeAsync(StateHasChanged);
+	}
+
+}

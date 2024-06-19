@@ -1,0 +1,125 @@
+﻿@using System.Runtime.InteropServices
+@using GemNote.Web.Services.Contracts
+@using GemNote.Web.States
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject UserState UserState
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+@inherits LayoutComponentBase
+
+<FluentLayout Style="height: 100vh;">
+	<FluentHeader>
+		<FluentAnchor Href="/" Appearance="Appearance.Filled">
+			<FluentLabel Typo="Typography.H3" Color="Color.Fill">
+				GemNote
+			</FluentLabel>
+		</FluentAnchor>
+
+		<FluentSpacer/>
+
+		<AuthorizeView>
+			<Authorized>
+				<FluentStack HorizontalAlignment="HorizontalAlignment.Right" Style="display: flex; align-items: center;">
+					<FluentPersona Name="@UserState.UserFullName"
+					               Image="@UserState.AvatarUrl"
+					               ImageSize="35px">
+					</FluentPersona>
+					<FluentButton id="actionButton"
+					              Appearance="Appearance.Accent"
+					              IconEnd="@(new Icons.Regular.Size16.ChevronDoubleDown())"
+					              @onclick="() => _visible = !_visible"
+					              Style="margin-left: 3px;">
+					</FluentButton>
+					<FluentMenu Anchor="actionButton" @bind-Open="_visible" VerticalThreshold="170">
+						<FluentMenuItem OnClick="Logout">
+							<FluentStack>
+								<FluentLabel Typo="Typography.Body">
+									Log out
+								</FluentLabel>
+								<FluentSpacer/>
+								<FluentIcon Value="@(new Icons.Regular.Size20.ArrowExit())"/>
+							</FluentStack>
+						</FluentMenuItem>
+					</FluentMenu>
+				</FluentStack>
+			</Authorized>
+			<NotAuthorized>
+				<FluentStack HorizontalAlignment="HorizontalAlignment.Right">
+					<FluentButton Appearance="Appearance.Accent" OnClick="Login">
+						Log in
+					</FluentButton>
+
+					<FluentButton Appearance="Appearance.Accent" OnClick="Signup">
+						Sign up
+					</FluentButton>
+				</FluentStack>
+			</NotAuthorized>
+		</AuthorizeView>
+	</FluentHeader>
+
+	<FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%" Style="background-color: var(--neutral-fill-stealth-rest)">
+		<NavMenu/>
+		<FluentBodyContent Class="body-content">
+			<ErrorBoundary>
+				<ChildContent>
+					<div class="content">
+						@Body
+					</div>
+				</ChildContent>
+				<ErrorContent Context="ex">
+					<div class="blazor-error-boundary">@ex.Message</div>
+				</ErrorContent>
+			</ErrorBoundary>
+
+			<FluentToastProvider MaxToastCount="10"/>
+			<FluentDialogProvider/>
+			<FluentTooltipProvider/>
+			<FluentKeyCodeProvider/>
+		</FluentBodyContent>
+	</FluentStack>
+
+	<FluentFooter Style="@("height: 36px; color: var(--neutral-foreground-rest);  font-size: var(--type-ramp-minus-1-font-size); line-height: var(--type-ramp-base-line-height);")">
+		<div class="version">
+			HNV - GemNote
+			&nbsp;-&nbsp;
+			<a href="https://dotnet.microsoft.com/en-us/learn/aspnet/what-is-aspnet-core">Powered by @RuntimeInformation.FrameworkDescription</a>
+		</div>
+		<FluentSpacer/>
+		<div class="copy">
+			May 2024
+		</div>
+	</FluentFooter>
+</FluentLayout>
+
+@code {
+	private bool _visible = false;
+
+	protected override void OnInitialized()
+	{
+		UserState.OnChange += StateHasChanged;
+	}
+
+	public void Dispose()
+	{
+		UserState.OnChange -= StateHasChanged;
+	}
+
+	private async Task Logout()
+	{
+		await AuthService.LogoutAsync();
+		NavigationManager.NavigateTo("/");
+	}
+
+	private void Login()
+	{
+		NavigationManager.NavigateTo("/login");
+	}
+
+	private void Signup()
+	{
+		NavigationManager.NavigateTo("/register");
+	}
+
+}

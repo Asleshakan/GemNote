@@ -1,0 +1,22 @@
+﻿@page "/counter"
+
+<PageTitle>Counter</PageTitle>
+
+<FluentLabel Typo="Typography.PageTitle">Counter</FluentLabel>
+
+<FluentLabel role="status">
+	Current count: <FluentBadge Appearance="Appearance.Accent">@currentCount</FluentBadge>
+</FluentLabel>
+
+<FluentButton Appearance="Appearance.Accent" @onclick="IncrementCount">
+	Click me
+</FluentButton>
+
+@code {
+	private int currentCount = 0;
+
+	private void IncrementCount()
+	{
+		currentCount++;
+	}
+}

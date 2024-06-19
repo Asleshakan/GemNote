@@ -1,0 +1,42 @@
+﻿.row-container {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.page-title {
+    margin-top: 2rem;
+    text-align: center;
+    align-self: center;
+    width: 100%;
+}
+
+.image-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.wall-image {
+    width: 100%;
+    max-width: 1050px;
+    height: auto;
+    object-fit: cover;
+    box-shadow: 0 0 15px var(--accent-fill-active);
+    border-radius: 10px;
+}
+
+    .wall-image:hover {
+        box-shadow: 0 0 40px var(--accent-fill-active);
+    }
+
+.content {
+    margin-top: 2rem;
+    text-align: center;
+    align-self: center;
+    width: 100%;
+}
