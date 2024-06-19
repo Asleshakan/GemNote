@@ -1,6 +1,7 @@
 using GemNote.API.Extensions;
 using GemNote.API.Services.Contracts;
 using Microsoft.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
