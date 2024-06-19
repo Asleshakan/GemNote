@@ -18,6 +18,24 @@ builder.Services.AddJwtBearer(builder.Configuration);
 
 builder.Services.AddSwagger();
 
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClientWebLocal", policy =>
+    {
+        policy.WithOrigins("https://localhost:7013") // Replace with your local development URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+
+    options.AddPolicy("AllowClientWeb", policy =>
+    {
+        policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net") // Replace with your production URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddCorsConfig();
 
 var app = builder.Build();
@@ -39,11 +57,11 @@ app.UseSwagger();
 if (app.Environment.IsDevelopment())
 {
 	app.UseSwaggerUI();
-	app.UseCors("*");
+	app.UseCors("AllowClientWebLocal");
 }
 else if (app.Environment.IsProduction())
 {
-	app.UseCors("*");
+	app.UseCors("AllowClientWeb");
 }
 
 app.UseHttpsRedirection();
