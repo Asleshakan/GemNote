@@ -6,37 +6,28 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddServices();
-
-// Add repositories to the container.
 builder.Services.AddRepositories();
-
-// Add DbContext
 builder.Services.AddIdentity(builder.Configuration);
-
-// Add Authentication and JWT Bearer
 builder.Services.AddJwtBearer(builder.Configuration);
-
 builder.Services.AddSwagger();
 
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("*", policy =>
+    options.AddPolicy("AllowLocalhost", policy =>
     {
-        policy.WithOrigins("https://localhost:7013") // Replace with your local development URL
+        policy.WithOrigins("https://localhost:7013") // Local development URL
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 
-    options.AddPolicy("*", policy =>
+    options.AddPolicy("AllowAzureStaticWebApp", policy =>
     {
-        policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net") // Replace with your production URL
+        policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net") // Production URL
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
-
-builder.Services.AddCorsConfig();
 
 var app = builder.Build();
 
@@ -56,19 +47,16 @@ await seeder.SeedNotebookAsync();
 app.UseSwagger();
 if (app.Environment.IsDevelopment())
 {
-	app.UseSwaggerUI();
-	app.UseCors("*");
+    app.UseSwaggerUI();
+    app.UseCors("AllowLocalhost");
 }
 else if (app.Environment.IsProduction())
 {
-	app.UseCors("*");
+    app.UseCors("AllowAzureStaticWebApp");
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
