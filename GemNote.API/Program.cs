@@ -23,16 +23,16 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 
-    options.AddPolicy("AllowAzureStaticWebApp", policy =>
-    {
-        policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net") // Production URL
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+  //  options.AddPolicy("AllowAzureStaticWebApp", policy =>
+   // {
+     //   policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net") // Production URL
+      //        .AllowAnyHeader()
+    //          .AllowAnyMethod()
+   //           .AllowCredentials();
+   // });
       options.AddPolicy("AllowAzureStaticWebApp", policy =>
     {
-        policy.WithOrigins("https://gemnoteapi.azurewebsites.net/api/auth/register") // Production URL
+        policy.WithOrigins("https://gemnoteapi.azurewebsites.net") // Production URL
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
