@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
+using System;
 
 public class Program
 {
@@ -13,7 +14,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         ConfigureServices(builder.Services, builder.Configuration);
-        
+
         var app = builder.Build();
         Configure(app, app.Environment, app.Services);
 
@@ -81,17 +82,17 @@ public class Program
         });
 
         // Seed data
-        SeedData(serviceProvider);
+        SeedData(serviceProvider).Wait(); // Ensure seeding completes before starting the app
     }
 
-    private static void SeedData(IServiceProvider serviceProvider)
+    private static async Task SeedData(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
         var seeder = scope.ServiceProvider.GetRequiredService<ISeeder>();
 
-        seeder.SeedRolesAsync().Wait();
-        seeder.SeedUsersAsync().Wait();
-        seeder.SeedCategoriesAsync().Wait();
-        seeder.SeedNotebookAsync().Wait();
+        await seeder.SeedRolesAsync();
+        await seeder.SeedUsersAsync();
+        await seeder.SeedCategoriesAsync();
+        await seeder.SeedNotebookAsync();
     }
 }
