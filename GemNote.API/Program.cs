@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
     });
       options.AddPolicy("AllowAzureStaticWebApp", policy =>
     {
-        policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net/api/auth/register") // Production URL
+        policy.WithOrigins("https://gemnoteapi.azurewebsites.net/api/auth/register") // Production URL
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
