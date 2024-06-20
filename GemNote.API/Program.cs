@@ -1,74 +1,97 @@
 using GemNote.API.Extensions;
 using GemNote.API.Services.Contracts;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using Microsoft.Extensions.Logging;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddServices();
-builder.Services.AddRepositories();
-builder.Services.AddIdentity(builder.Configuration);
-builder.Services.AddJwtBearer(builder.Configuration);
-builder.Services.AddSwagger();
-
-// Configure CORS
-builder.Services.AddCors(options =>
+public class Program
 {
-    options.AddPolicy("AllowLocalhost", policy =>
+    public static void Main(string[] args)
     {
-        policy.WithOrigins("https://localhost:7013") // Local development URL
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+        var builder = WebApplication.CreateBuilder(args);
+        ConfigureServices(builder.Services, builder.Configuration);
+        
+        var app = builder.Build();
+        Configure(app, app.Environment, app.Services);
 
-  //  options.AddPolicy("AllowAzureStaticWebApp", policy =>
-   // {
-     //   policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net") // Production URL
-      //        .AllowAnyHeader()
-    //          .AllowAnyMethod()
-   //           .AllowCredentials();
-   // });
-      options.AddPolicy("AllowAzureStaticWebApp", policy =>
+        app.Run();
+    }
+
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        policy.WithOrigins("https://gemnoteapi.azurewebsites.net") // Production URL
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+        services.AddServices();
+        services.AddRepositories();
+        services.AddIdentity(configuration);
+        services.AddJwtBearer(configuration);
+        services.AddSwagger();
 
-});
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowLocalhost", policy =>
+            {
+                policy.WithOrigins("https://localhost:7013")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
 
-var app = builder.Build();
+            options.AddPolicy("AllowAzureStaticWebApp", policy =>
+            {
+                policy.WithOrigins("https://lively-water-0e534d00f.5.azurestaticapps.net")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
 
-#region Seeding data
+            options.AddPolicy("AllowAzureWebApp", policy =>
+            {
+                policy.WithOrigins("https://gemnoteapi.azurewebsites.net")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+    }
 
-var scope = app.Services.CreateScope();
-var seeder = scope.ServiceProvider.GetRequiredService<ISeeder>();
+    private static void Configure(IApplicationBuilder app, IHostEnvironment env, IServiceProvider serviceProvider)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+            app.UseCors("AllowLocalhost");
+        }
+        else if (env.IsProduction())
+        {
+            app.UseCors("AllowAzureWebApp");
+        }
 
-await seeder.SeedRolesAsync();
-await seeder.SeedUsersAsync();
-await seeder.SeedCategoriesAsync();
-await seeder.SeedNotebookAsync();
+        app.UseHttpsRedirection();
+        app.UseRouting();
 
-#endregion
+        app.UseAuthentication();
+        app.UseAuthorization();
 
-// Configure the HTTP request pipeline.
-app.UseSwagger();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwaggerUI();
-    app.UseCors("AllowLocalhost");
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+
+        // Seed data
+        SeedData(serviceProvider);
+    }
+
+    private static void SeedData(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var seeder = scope.ServiceProvider.GetRequiredService<ISeeder>();
+
+        seeder.SeedRolesAsync().Wait();
+        seeder.SeedUsersAsync().Wait();
+        seeder.SeedCategoriesAsync().Wait();
+        seeder.SeedNotebookAsync().Wait();
+    }
 }
-else if (app.Environment.IsProduction())
-{
-    app.UseCors("AllowAzureStaticWebApp");
-}
-
-app.UseHttpsRedirection();
-app.UseCors(); // Ensure UseCors is called before UseAuthentication and UseAuthorization
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
-app.Run();
